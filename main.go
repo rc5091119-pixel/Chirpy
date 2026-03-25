@@ -19,18 +19,9 @@ func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
 }
 
 func (cfg *apiConfig) metricsHandler(w http.ResponseWriter, r *http.Request) {
-	count := cfg.fileserverHits.Load()
-
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte(fmt.Sprintf("Hits: %d", count)))
-}
-
-func (cfg *apiConfig)resetHandler(w http.ResponseWriter,r *http.Request){
-	cfg.fileserverHits.Store(0)
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("Counter reset"))
+	w.Write([]byte(fmt.Sprintf("Hits: %d", cfg.fileserverHits.Load())))
 }
 
 func main() {
@@ -40,18 +31,16 @@ func main() {
 	mux := http.NewServeMux()
 
 	// health endpoint
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
-	})
-	apiConfig := &apiConfig{}
-	
+	apiConfig := &apiConfig{
+		fileserverHits: atomic.Int32{},
+	}
+
 	// static file server
 	fs := http.FileServer(http.Dir(filepathroot))
 	mux.Handle("/app/", apiConfig.middlewareMetricsInc(http.StripPrefix("/app/", fs)))
-	mux.HandleFunc("/metrics",apiConfig.metricsHandler)
-	mux.HandleFunc("/reset",apiConfig.resetHandler)
+	mux.HandleFunc("GET /healthz", handlerReadiness)
+	mux.HandleFunc("GET /metrics", apiConfig.metricsHandler)
+	mux.HandleFunc("POST /reset", apiConfig.handlerReset)
 	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,
