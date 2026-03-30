@@ -1,4 +1,32 @@
+
+A "migration" in Goose is just a .sql file with some SQL queries and some special comments. Our first migration should just create a users table. The simplest format for these files is:
+
+psql "postgres://postgres:postgres@localhost:5432/chirpy?sslmode=disable"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 package main
+
+
+
+
+
+
 
 import (
 	"context"
