@@ -3,6 +3,9 @@ A "migration" in Goose is just a .sql file with some SQL queries and some specia
 
 psql "postgres://postgres:postgres@localhost:5432/chirpy?sslmode=disable"
 
+goose postgres "postgres://postgres:postgres@localhost:5432/chirpy?sslmode=disable" up
+
+
 
 
 

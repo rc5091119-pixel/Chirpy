@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/rc5091119-pixel/Chirpy/internal/auth"
+	"github.com/rc5091119-pixel/Chirpy/internal/database"
 )
 
 type User struct {
@@ -13,10 +15,12 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+	Password string `json:"-"`
 }
 
 func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
+		Password string `json:"password"`
 		Email string `json:"email"`
 	}
 	type response struct {
@@ -30,8 +34,16 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
 	}
+	hashPassword,err := auth.HashPassword(params.Password)
+	if err != nil {
+		respondWithError(w,http.StatusInternalServerError,"coult not Hashed ",err)
+		return
+	}
 
-	user, err := cfg.db.CreateUser(r.Context(), params.Email)
+	user, err := cfg.db.CreateUser(r.Context(),database.CreateUserParams{
+		Email: params.Email,
+		HashedPassword:hashPassword,
+	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create user", err)
 		return
