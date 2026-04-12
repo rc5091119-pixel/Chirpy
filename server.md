@@ -5,6 +5,8 @@ psql "postgres://postgres:postgres@localhost:5432/chirpy?sslmode=disable"
 
 goose postgres "postgres://postgres:postgres@localhost:5432/chirpy?sslmode=disable" up
 
+goose -dir sql/schema postgres "$DB_URL" up
+
 
 
 

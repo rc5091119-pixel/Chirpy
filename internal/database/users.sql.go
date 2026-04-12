@@ -21,7 +21,7 @@ VALUES (
     $1,
     $2
 )
-RETURNING id, created_at, updated_at, email, hashed_password
+RETURNING id, created_at, updated_at, email, hashed_password, is_chirpy_red
 `
 
 type CreateUserParams struct {
@@ -38,12 +38,13 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.UpdatedAt,
 		&i.Email,
 		&i.HashedPassword,
+		&i.IsChirpyRed,
 	)
 	return i, err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, created_at, updated_at, email, hashed_password FROM users
+SELECT id, created_at, updated_at, email, hashed_password, is_chirpy_red FROM users
 WHERE email = $1
 LIMIT 1
 `
@@ -57,6 +58,7 @@ func (q *Queries) GetUser(ctx context.Context, email string) (User, error) {
 		&i.UpdatedAt,
 		&i.Email,
 		&i.HashedPassword,
+		&i.IsChirpyRed,
 	)
 	return i, err
 }
@@ -67,7 +69,7 @@ SET email = $1,
     hashed_password = $2,
     updated_at = NOW()
 WHERE id = $3
-RETURNING id, email, created_at, updated_at
+RETURNING id, email, created_at, updated_at, is_chirpy_red
 `
 
 type UpdateUserParams struct {
@@ -77,10 +79,11 @@ type UpdateUserParams struct {
 }
 
 type UpdateUserRow struct {
-	ID        uuid.UUID
-	Email     string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID          uuid.UUID
+	Email       string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	IsChirpyRed bool
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateUserRow, error) {
@@ -91,6 +94,36 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (UpdateU
 		&i.Email,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.IsChirpyRed,
+	)
+	return i, err
+}
+
+const updateUserRedChirp = `-- name: UpdateUserRedChirp :one
+UPDATE users
+SET is_chirpy_red = true,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id,email,created_at,updated_at,is_chirpy_red
+`
+
+type UpdateUserRedChirpRow struct {
+	ID          uuid.UUID
+	Email       string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	IsChirpyRed bool
+}
+
+func (q *Queries) UpdateUserRedChirp(ctx context.Context, id uuid.UUID) (UpdateUserRedChirpRow, error) {
+	row := q.db.QueryRowContext(ctx, updateUserRedChirp, id)
+	var i UpdateUserRedChirpRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsChirpyRed,
 	)
 	return i, err
 }
