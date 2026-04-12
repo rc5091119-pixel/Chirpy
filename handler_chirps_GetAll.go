@@ -55,5 +55,6 @@ func (cfg *apiConfig) handlerChirpsGetOne(w http.ResponseWriter, r *http.Request
 		User_id:   chirp.UserID,
 	}
 	respondWithJSON(w, http.StatusOK, resp)
-
 }
+
+
